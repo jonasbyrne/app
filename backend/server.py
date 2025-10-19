@@ -322,10 +322,10 @@ async def analyze_stock(symbol: str):
     try:
         symbol = symbol.upper()
         
-        # Get ticker details for beta and dividend
-        details = polygon_client.get_ticker_details(symbol)
+        # Get data from FINVIZ
+        finviz_data = await scrape_finviz_data(symbol)
         
-        # Get historical data for EMA calculation
+        # Get historical data for EMA calculation and candlestick analysis
         end_date = datetime.now()
         start_date = end_date - timedelta(days=120)
         
@@ -354,43 +354,91 @@ async def analyze_stock(symbol: str):
         ]
         candlestick_pattern = analyze_candlestick(candles)
         
-        # Prepare analysis data
+        # Prepare analysis data with FINVIZ data
         analysis_data = {
-            'beta': getattr(details, 'beta', None),
-            'dividend_yield': getattr(details, 'dividend_yield', None),
+            'beta': finviz_data.get('beta'),
+            'dividend_yield': finviz_data.get('dividend_yield'),
+            'pe_ratio': finviz_data.get('pe_ratio'),
+            'peg_ratio': finviz_data.get('peg_ratio'),
+            'pb_ratio': finviz_data.get('pb_ratio'),
+            'ps_ratio': finviz_data.get('ps_ratio'),
+            'rsi': finviz_data.get('rsi'),
+            'roe': finviz_data.get('roe'),
+            'roa': finviz_data.get('roa'),
+            'profit_margin': finviz_data.get('profit_margin'),
+            'debt_equity': finviz_data.get('debt_equity'),
+            'target_price': finviz_data.get('target_price'),
+            'market_cap': finviz_data.get('market_cap'),
             'ema_20': ema_20,
             'ema_50': ema_50,
             'candlestick_pattern': candlestick_pattern,
-            'current_price': prices[-1] if prices else None
+            'current_price': prices[-1] if prices else None,
+            'perf_week': finviz_data.get('perf_week'),
+            'perf_month': finviz_data.get('perf_month'),
+            'perf_quarter': finviz_data.get('perf_quarter'),
+            'perf_year': finviz_data.get('perf_year'),
         }
         
-        # Get AI analysis
-        ai_analysis = await get_ai_analysis(symbol, analysis_data)
+        # Get AI analysis with recommendation
+        ai_analysis, recommendation = await get_ai_analysis(symbol, analysis_data)
         
-        # Calculate potential score (simple algorithm)
+        # Calculate potential score (improved algorithm)
         potential_score = 50  # Base score
-        if analysis_data['beta'] and analysis_data['beta'] < 1.2:
-            potential_score += 10
-        if analysis_data['dividend_yield'] and analysis_data['dividend_yield'] > 2:
-            potential_score += 15
+        
+        # Beta check (lower is better for stability)
+        if analysis_data['beta']:
+            if analysis_data['beta'] < 1:
+                potential_score += 10
+            elif analysis_data['beta'] > 1.5:
+                potential_score -= 10
+        
+        # Dividend yield (higher is better)
+        if analysis_data['dividend_yield']:
+            if analysis_data['dividend_yield'] > 3:
+                potential_score += 15
+            elif analysis_data['dividend_yield'] > 1:
+                potential_score += 8
+        
+        # EMA trend
         if ema_20 and ema_50 and ema_20 > ema_50:
             potential_score += 15
+        elif ema_20 and ema_50 and ema_20 < ema_50:
+            potential_score -= 10
+        
+        # Candlestick pattern
         if "Alcista" in candlestick_pattern:
             potential_score += 10
+        elif "Bajista" in candlestick_pattern:
+            potential_score -= 10
         
-        potential_score = min(100, potential_score)
+        # P/E ratio (reasonable range)
+        if analysis_data['pe_ratio']:
+            if 15 <= analysis_data['pe_ratio'] <= 25:
+                potential_score += 10
+            elif analysis_data['pe_ratio'] > 40:
+                potential_score -= 10
+        
+        # RSI (overbought/oversold)
+        if analysis_data['rsi']:
+            if 30 <= analysis_data['rsi'] <= 70:
+                potential_score += 5
+            elif analysis_data['rsi'] > 70:
+                potential_score -= 10
+            elif analysis_data['rsi'] < 30:
+                potential_score += 10  # Oversold can be buying opportunity
+        
+        potential_score = max(0, min(100, potential_score))
+        
+        # Get ticker details for name
+        details = polygon_client.get_ticker_details(symbol)
         
         return {
             'symbol': symbol,
-            'name': details.name,
-            'beta': analysis_data['beta'],
-            'dividend_yield': analysis_data['dividend_yield'],
-            'ema_20': ema_20,
-            'ema_50': ema_50,
-            'candlestick_pattern': candlestick_pattern,
+            'name': details.name if details else symbol,
+            **analysis_data,
             'ai_analysis': ai_analysis,
+            'recommendation': recommendation,
             'potential_score': potential_score,
-            'current_price': analysis_data['current_price'],
             'historical_prices': prices[-30:],  # Last 30 days
             'timestamp': datetime.now(timezone.utc).isoformat()
         }
