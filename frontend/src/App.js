@@ -396,6 +396,57 @@ const StockDetail = () => {
           </Dialog>
         </div>
 
+        {/* AI Recommendation Alert */}
+        {analysis.recommendation && (
+          <Card 
+            className={`mb-8 border-2 ${
+              analysis.recommendation === 'COMPRAR' 
+                ? 'bg-gradient-to-r from-green-50 to-emerald-50 border-green-500' 
+                : analysis.recommendation === 'VENDER'
+                ? 'bg-gradient-to-r from-red-50 to-rose-50 border-red-500'
+                : 'bg-gradient-to-r from-blue-50 to-cyan-50 border-blue-500'
+            }`}
+            data-testid="recommendation-alert"
+          >
+            <CardContent className="py-6">
+              <div className="flex items-center gap-4">
+                {analysis.recommendation === 'COMPRAR' ? (
+                  <div className="p-3 rounded-full bg-green-500">
+                    <TrendingUp className="w-8 h-8 text-white" />
+                  </div>
+                ) : analysis.recommendation === 'VENDER' ? (
+                  <div className="p-3 rounded-full bg-red-500">
+                    <TrendingDown className="w-8 h-8 text-white" />
+                  </div>
+                ) : (
+                  <div className="p-3 rounded-full bg-blue-500">
+                    <Minus className="w-8 h-8 text-white" />
+                  </div>
+                )}
+                <div className="flex-1">
+                  <h3 className="text-2xl font-bold mb-1" style={{ fontFamily: 'Space Grotesk, sans-serif' }}>
+                    Recomendación: {analysis.recommendation}
+                  </h3>
+                  <p className="text-sm text-gray-600">
+                    Basado en análisis técnico y evaluación con IA
+                  </p>
+                </div>
+                <Badge 
+                  className={`text-lg px-4 py-2 ${
+                    analysis.recommendation === 'COMPRAR' 
+                      ? 'bg-green-500 hover:bg-green-600' 
+                      : analysis.recommendation === 'VENDER'
+                      ? 'bg-red-500 hover:bg-red-600'
+                      : 'bg-blue-500 hover:bg-blue-600'
+                  }`}
+                >
+                  {analysis.recommendation}
+                </Badge>
+              </div>
+            </CardContent>
+          </Card>
+        )}
+
         {/* Price & Score */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
           <Card className="backdrop-blur-md bg-white/95 shadow-2xl border-0" data-testid="price-card">
