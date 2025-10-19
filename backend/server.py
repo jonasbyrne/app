@@ -202,8 +202,8 @@ def analyze_candlestick(candles: List[Dict]) -> str:
     
     return ", ".join(patterns) if patterns else "Patrón Neutral"
 
-async def get_ai_analysis(symbol: str, analysis_data: Dict) -> str:
-    """Get AI-powered analysis using OpenAI"""
+async def get_ai_analysis(symbol: str, analysis_data: Dict) -> tuple[str, str]:
+    """Get AI-powered analysis using OpenAI - returns (analysis, recommendation)"""
     try:
         chat = LlmChat(
             api_key=os.environ['EMERGENT_LLM_KEY'],
@@ -217,23 +217,55 @@ Analiza la siguiente acción: {symbol}
 Datos técnicos:
 - Beta: {analysis_data.get('beta', 'N/A')}
 - Dividend Yield: {analysis_data.get('dividend_yield', 'N/A')}%
+- P/E Ratio: {analysis_data.get('pe_ratio', 'N/A')}
+- PEG Ratio: {analysis_data.get('peg_ratio', 'N/A')}
+- ROE: {analysis_data.get('roe', 'N/A')}%
+- Profit Margin: {analysis_data.get('profit_margin', 'N/A')}%
 - EMA 20: ${analysis_data.get('ema_20', 'N/A')}
 - EMA 50: ${analysis_data.get('ema_50', 'N/A')}
+- RSI: {analysis_data.get('rsi', 'N/A')}
 - Patrón de velas: {analysis_data.get('candlestick_pattern', 'N/A')}
 - Precio actual: ${analysis_data.get('current_price', 'N/A')}
+- Precio objetivo: ${analysis_data.get('target_price', 'N/A')}
 
-Proporciona un análisis breve (máximo 150 palabras) sobre:
+IMPORTANTE: Tu respuesta debe tener exactamente este formato:
+
+RECOMENDACIÓN: [Escribe solo una de estas tres palabras: COMPRAR, VENDER o MANTENER]
+
+ANÁLISIS:
+[Proporciona un análisis breve de máximo 150 palabras sobre:
 1. Potencial de inversión
 2. Riesgos principales
-3. Recomendación (Comprar/Mantener/Vender)
+3. Justificación de tu recomendación]
 """
         
         message = UserMessage(text=prompt)
         response = await chat.send_message(message)
-        return response
+        
+        # Extract recommendation and analysis
+        lines = response.strip().split('\n')
+        recommendation = "MANTENER"  # default
+        analysis = response
+        
+        for line in lines:
+            if line.startswith('RECOMENDACIÓN:'):
+                rec_text = line.replace('RECOMENDACIÓN:', '').strip().upper()
+                if 'COMPRAR' in rec_text:
+                    recommendation = "COMPRAR"
+                elif 'VENDER' in rec_text:
+                    recommendation = "VENDER"
+                elif 'MANTENER' in rec_text:
+                    recommendation = "MANTENER"
+                break
+        
+        # Clean analysis text (remove the recommendation line)
+        if 'ANÁLISIS:' in response:
+            analysis = response.split('ANÁLISIS:')[1].strip()
+        
+        return analysis, recommendation
     except Exception as e:
         logger.error(f"AI analysis error: {e}")
-        return "Análisis IA no disponible temporalmente"
+        return "Análisis IA no disponible temporalmente", "MANTENER"
 
 # Routes
 @api_router.get("/")
