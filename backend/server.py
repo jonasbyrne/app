@@ -12,6 +12,8 @@ from datetime import datetime, timezone, timedelta
 from polygon import RESTClient
 from emergentintegrations.llm.chat import LlmChat, UserMessage
 import asyncio
+from bs4 import BeautifulSoup
+import re
 
 ROOT_DIR = Path(__file__).parent
 load_dotenv(ROOT_DIR / '.env')
