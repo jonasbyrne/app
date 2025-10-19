@@ -507,7 +507,19 @@ const StockDetail = () => {
               <div>
                 <p className="text-sm text-gray-500 mb-1">Dividend Yield</p>
                 <p className="text-3xl font-bold" style={{ fontFamily: 'Space Grotesk, sans-serif' }}>
-                  {analysis.dividend_yield?.toFixed(2)}%
+                  {analysis.dividend_yield ? `${analysis.dividend_yield.toFixed(2)}%` : "N/A"}
+                </p>
+              </div>
+              <div>
+                <p className="text-sm text-gray-500 mb-1">P/E Ratio</p>
+                <p className="text-3xl font-bold" style={{ fontFamily: 'Space Grotesk, sans-serif' }}>
+                  {analysis.pe_ratio?.toFixed(2) || "N/A"}
+                </p>
+              </div>
+              <div>
+                <p className="text-sm text-gray-500 mb-1">PEG Ratio</p>
+                <p className="text-3xl font-bold" style={{ fontFamily: 'Space Grotesk, sans-serif' }}>
+                  {analysis.peg_ratio?.toFixed(2) || "N/A"}
                 </p>
               </div>
               <div>
@@ -521,6 +533,85 @@ const StockDetail = () => {
                 <p className="text-3xl font-bold" style={{ fontFamily: 'Space Grotesk, sans-serif' }}>
                   ${analysis.ema_50?.toFixed(2) || "N/A"}
                 </p>
+              </div>
+              <div>
+                <p className="text-sm text-gray-500 mb-1">RSI (14)</p>
+                <p className="text-3xl font-bold" style={{ fontFamily: 'Space Grotesk, sans-serif' }}>
+                  {analysis.rsi?.toFixed(2) || "N/A"}
+                </p>
+              </div>
+              <div>
+                <p className="text-sm text-gray-500 mb-1">ROE</p>
+                <p className="text-3xl font-bold" style={{ fontFamily: 'Space Grotesk, sans-serif' }}>
+                  {analysis.roe ? `${analysis.roe.toFixed(2)}%` : "N/A"}
+                </p>
+              </div>
+            </div>
+            
+            {/* Additional metrics */}
+            <div className="mt-6 pt-6 border-t grid grid-cols-2 md:grid-cols-4 gap-4">
+              <div>
+                <p className="text-xs text-gray-500 mb-1">Profit Margin</p>
+                <p className="text-lg font-semibold">
+                  {analysis.profit_margin ? `${analysis.profit_margin.toFixed(2)}%` : "N/A"}
+                </p>
+              </div>
+              <div>
+                <p className="text-xs text-gray-500 mb-1">Debt/Equity</p>
+                <p className="text-lg font-semibold">
+                  {analysis.debt_equity?.toFixed(2) || "N/A"}
+                </p>
+              </div>
+              <div>
+                <p className="text-xs text-gray-500 mb-1">Target Price</p>
+                <p className="text-lg font-semibold">
+                  {analysis.target_price ? `$${analysis.target_price.toFixed(2)}` : "N/A"}
+                </p>
+              </div>
+              <div>
+                <p className="text-xs text-gray-500 mb-1">Market Cap</p>
+                <p className="text-lg font-semibold">
+                  {analysis.market_cap || "N/A"}
+                </p>
+              </div>
+            </div>
+            
+            {/* Performance metrics */}
+            <div className="mt-6 pt-6 border-t">
+              <h4 className="text-sm font-semibold mb-3 text-gray-700">Rendimiento</h4>
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                <div>
+                  <p className="text-xs text-gray-500 mb-1">Semana</p>
+                  <Badge variant={analysis.perf_week >= 0 ? "default" : "destructive"}>
+                    {analysis.perf_week !== null && analysis.perf_week !== undefined 
+                      ? `${analysis.perf_week >= 0 ? '+' : ''}${analysis.perf_week.toFixed(2)}%` 
+                      : "N/A"}
+                  </Badge>
+                </div>
+                <div>
+                  <p className="text-xs text-gray-500 mb-1">Mes</p>
+                  <Badge variant={analysis.perf_month >= 0 ? "default" : "destructive"}>
+                    {analysis.perf_month !== null && analysis.perf_month !== undefined
+                      ? `${analysis.perf_month >= 0 ? '+' : ''}${analysis.perf_month.toFixed(2)}%`
+                      : "N/A"}
+                  </Badge>
+                </div>
+                <div>
+                  <p className="text-xs text-gray-500 mb-1">Trimestre</p>
+                  <Badge variant={analysis.perf_quarter >= 0 ? "default" : "destructive"}>
+                    {analysis.perf_quarter !== null && analysis.perf_quarter !== undefined
+                      ? `${analysis.perf_quarter >= 0 ? '+' : ''}${analysis.perf_quarter.toFixed(2)}%`
+                      : "N/A"}
+                  </Badge>
+                </div>
+                <div>
+                  <p className="text-xs text-gray-500 mb-1">Año</p>
+                  <Badge variant={analysis.perf_year >= 0 ? "default" : "destructive"}>
+                    {analysis.perf_year !== null && analysis.perf_year !== undefined
+                      ? `${analysis.perf_year >= 0 ? '+' : ''}${analysis.perf_year.toFixed(2)}%`
+                      : "N/A"}
+                  </Badge>
+                </div>
               </div>
             </div>
           </CardContent>
