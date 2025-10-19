@@ -77,6 +77,76 @@ class PortfolioStockCreate(BaseModel):
     purchase_date: datetime
 
 # Helper functions
+async def scrape_finviz_data(symbol: str) -> Dict:
+    """Scrape additional stock data from FINVIZ"""
+    import requests
+    
+    try:
+        url = f"https://finviz.com/quote.ashx?t={symbol}"
+        headers = {
+            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
+        }
+        
+        response = requests.get(url, headers=headers, timeout=10)
+        soup = BeautifulSoup(response.content, 'html.parser')
+        
+        # Find the table with fundamental data
+        table = soup.find('table', class_='snapshot-table2')
+        if not table:
+            return {}
+        
+        data = {}
+        rows = table.find_all('tr')
+        
+        for row in rows:
+            cells = row.find_all('td')
+            for i in range(0, len(cells), 2):
+                if i + 1 < len(cells):
+                    key = cells[i].get_text(strip=True)
+                    value = cells[i + 1].get_text(strip=True)
+                    data[key] = value
+        
+        # Parse specific values
+        def parse_number(s):
+            try:
+                s = s.replace(',', '').replace('%', '').replace('B', '').replace('M', '')
+                s = re.sub(r'[^0-9.\-]', '', s.split()[0] if ' ' else s)
+                return float(s) if s and s not in ['-', ''] else None
+            except:
+                return None
+        
+        parsed_data = {
+            'pe_ratio': parse_number(data.get('P/E', '')),
+            'forward_pe': parse_number(data.get('Forward P/E', '')),
+            'peg_ratio': parse_number(data.get('PEG', '')),
+            'ps_ratio': parse_number(data.get('P/S', '')),
+            'pb_ratio': parse_number(data.get('P/B', '')),
+            'beta': parse_number(data.get('Beta', '')),
+            'dividend_yield': parse_number(data.get('Dividend %', '')),
+            'rsi': parse_number(data.get('RSI (14)', '')),
+            'sma20': parse_number(data.get('SMA20', '')),
+            'sma50': parse_number(data.get('SMA50', '')),
+            'sma200': parse_number(data.get('SMA200', '')),
+            'volatility': data.get('Volatility', ''),
+            'target_price': parse_number(data.get('Target Price', '')),
+            'recommendation': parse_number(data.get('Recom', '')),
+            'roe': parse_number(data.get('ROE', '')),
+            'roa': parse_number(data.get('ROA', '')),
+            'profit_margin': parse_number(data.get('Profit Margin', '')),
+            'debt_equity': parse_number(data.get('Debt/Eq', '')),
+            'eps_ttm': parse_number(data.get('EPS (ttm)', '')),
+            'market_cap': data.get('Market Cap', ''),
+            'perf_week': parse_number(data.get('Perf Week', '')),
+            'perf_month': parse_number(data.get('Perf Month', '')),
+            'perf_quarter': parse_number(data.get('Perf Quarter', '')),
+            'perf_year': parse_number(data.get('Perf Year', '')),
+        }
+        
+        return parsed_data
+    except Exception as e:
+        logger.error(f"FINVIZ scraping error for {symbol}: {e}")
+        return {}
+
 def calculate_ema(prices: List[float], period: int) -> float:
     """Calculate Exponential Moving Average"""
     if len(prices) < period:
