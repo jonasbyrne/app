@@ -3,7 +3,7 @@ import "@/App.css";
 import { BrowserRouter, Routes, Route, useNavigate } from "react-router-dom";
 import axios from "axios";
 import { Toaster, toast } from "sonner";
-import { Search, TrendingUp, Wallet, BarChart3, LineChart, DollarSign, Activity } from "lucide-react";
+import { Search, TrendingUp, Wallet, BarChart3, LineChart, DollarSign, Activity, AlertCircle, TrendingDown, Minus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
