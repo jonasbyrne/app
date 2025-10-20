@@ -1,0 +1,46 @@
+version: "3.9"
+
+services:
+  mongo:
+    image: mongo:7
+    restart: unless-stopped
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongo_data:/data/db
+
+  backend:
+    build:
+      context: ./backend
+    command: ["uvicorn","server:app","--host","0.0.0.0","--port","8000","--reload"]
+    environment:
+      MONGO_URI: mongodb://mongo:27017
+      DB_NAME: emergent
+      OPENAI_API_KEY: ${OPENAI_API_KEY}
+      CORS_ORIGINS: ${CORS_ORIGINS:-*}
+      POLYGON_API_KEY: ${POLYGON_API_KEY:-}
+    depends_on:
+      - mongo
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./backend:/app
+
+  frontend:
+    build:
+      context: ./frontend
+    command: ["npm","start","--","--host","0.0.0.0","--port","3000"]
+    environment:
+      REACT_APP_API_URL: http://backend:8000
+      PORT: 3000
+      HOST: 0.0.0.0
+    depends_on:
+      - backend
+    ports:
+      - "3000:3000"
+    volumes:
+      - ./frontend:/usr/src/app
+      - /usr/src/app/node_modules
+
+volumes:
+  mongo_data:
